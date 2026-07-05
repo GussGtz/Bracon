@@ -741,3 +741,19 @@ Bitácora de control del desarrollo del sitio web de Grupo Bracon. Cada entrada 
 - [ ] Reemplazar `https://www.facebook.com` y `https://www.instagram.com` por los perfiles reales de Grupo Bracon cuando existan.
 - [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
 - [ ] Número de WhatsApp, correo, dirección y testimonios siguen siendo datos de relleno (placeholders) pendientes de reemplazar por los reales del cliente.
+
+---
+
+## 2026-07-05 — Puntos del carrusel del hero ocultos en móvil
+
+**Motivo:** el usuario pidió quitar los puntos de navegación del carrusel del hero en modo móvil (las flechas prev/next siguen disponibles para cambiar de foto).
+
+**Hecho:**
+- Se agregó `@media (max-width: 640px) { .hero-dots { display: none; } }` en [css/styles.css](css/styles.css), justo después de la definición completa de `.hero-dots` (el primer intento se colocó antes de esa definición y la regla base con `display:flex` lo sobrescribía por venir después en el archivo — se corrigió moviendo el override al lugar correcto).
+- Verificado con Playwright en las 5 páginas con carrusel: los puntos ahora tienen `display:none` en móvil (375px) y `display:flex` sin cambios en escritorio (1280px); las flechas prev/next siguen funcionando normalmente para cambiar de foto.
+- Verificación final: CSS con llaves balanceadas (334/334), auditoría de overflow horizontal (30/30 sin problemas), sin regresiones.
+
+**Pendiente:**
+- [ ] Reemplazar `https://www.facebook.com` y `https://www.instagram.com` por los perfiles reales de Grupo Bracon cuando existan.
+- [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
+- [ ] Número de WhatsApp, correo, dirección y testimonios siguen siendo datos de relleno (placeholders) pendientes de reemplazar por los reales del cliente.

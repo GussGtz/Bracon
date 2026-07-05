@@ -309,6 +309,9 @@ section { padding: 90px 0; }
   inset: -14px -4px;
 }
 .hero-dots button.active { background: var(--gold-400); width: 22px; border-radius: 5px; }
+@media (max-width: 640px) {
+  .hero-dots { display: none; }
+}
 
 .hero .container { position: relative; z-index: 3; padding-top: 100px; }
 
