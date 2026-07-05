@@ -343,6 +343,9 @@ section { padding: 90px 0; }
   animation: bounce 2.2s infinite;
 }
 @keyframes bounce { 0%,100%{transform:translate(-50%,0);} 50%{transform:translate(-50%,8px);} }
+@media (max-width: 768px) {
+  .scroll-cue { display: none; }
+}
 
 /* ---------- Quiénes somos ---------- */
 .about { background: var(--white); overflow: hidden; }

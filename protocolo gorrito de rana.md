@@ -723,3 +723,21 @@ Bitácora de control del desarrollo del sitio web de Grupo Bracon. Cada entrada 
 **Pendiente:**
 - [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
 - [ ] Número de WhatsApp, correo, dirección y testimonios siguen siendo datos de relleno (placeholders) pendientes de reemplazar por los reales del cliente.
+
+---
+
+## 2026-07-05 — Espacio del scroll-cue, botones sociales reales y auditoría general de botones
+
+**Motivo:** el usuario reportó que el texto "Desplázate" se sobreponía al botón "Ver nuestros servicios" del hero en móvil, pidió que los botones de Facebook/Instagram lleven a su red social real (sin tener aún un perfil específico), y pidió una revisión general para dejar una demo 100% funcional.
+
+**Hecho:**
+- **"Desplázate" sobrepuesto:** confirmado con Playwright — en `index.html` (única página con este indicador), a 375px de ancho el botón "Ver nuestros servicios" y el texto `.scroll-cue` se solapaban (`overlap:true`). En vez de solo ajustar el espaciado (frágil ante cambios futuros de longitud de texto), se ocultó `.scroll-cue` en `@media (max-width:768px)` en [css/styles.css](css/styles.css) — es un indicador puramente decorativo pensado para pantallas grandes (en móvil el usuario ya sabe deslizar el dedo), patrón común en sitios profesionales. Verificado: `display:none` en móvil, `display:flex` sin cambios en escritorio.
+- **Botones de redes sociales:** los 7 botones de Facebook y 7 de Instagram (repartidos entre las 6 páginas) tenían `href="#"` sin destino real. Se reemplazaron en todas las páginas por `https://www.facebook.com` y `https://www.instagram.com` respectivamente, con `target="_blank" rel="noopener"` — funcionan de inmediato aunque el cliente aún no tenga perfiles específicos creados; solo hay que reemplazar la URL genérica por el perfil real cuando exista.
+- **Auditoría general de todos los botones:** se recorrieron programáticamente las 6 páginas verificando: enlaces rotos (`href="#"` sin manejo de JS), botones sociales con destino y `target` correctos, menú móvil (abrir/cerrar), errores de consola. **0 problemas encontrados.** Se confirmó además que los enlaces `href="#"` restantes (galería/lightbox y "Ver más" del portafolio) son intencionales — el JS les hace `preventDefault()` y abre el lightbox o navega mediante lógica propia, no son enlaces rotos.
+- **Formulario de contacto:** probado de extremo a extremo (llenar los 4 campos, enviar) — arma correctamente el mensaje de WhatsApp con nombre, teléfono, servicio y mensaje, y abre `api.whatsapp.com` en pestaña nueva.
+- Verificación final: CSS con llaves balanceadas (332/332), `main.js` con sintaxis válida, auditoría de overflow horizontal (30/30), auditoría de animaciones de aparición (27/27) y carrusel del hero (flechas y puntos funcionando en las 5 páginas), sin regresiones.
+
+**Pendiente:**
+- [ ] Reemplazar `https://www.facebook.com` y `https://www.instagram.com` por los perfiles reales de Grupo Bracon cuando existan.
+- [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
+- [ ] Número de WhatsApp, correo, dirección y testimonios siguen siendo datos de relleno (placeholders) pendientes de reemplazar por los reales del cliente.
