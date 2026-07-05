@@ -706,3 +706,20 @@ Bitácora de control del desarrollo del sitio web de Grupo Bracon. Cada entrada 
 - [ ] Confirmar con el usuario si se hace commit + push de todos los cambios de responsividad acumulados a `https://github.com/GussGtz/Bracon.git`.
 - [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
 - [ ] Número de WhatsApp, correo, dirección y testimonios siguen siendo datos de relleno (placeholders) pendientes de reemplazar por los reales del cliente.
+
+---
+
+## 2026-07-05 — Corrección: carrusel del hero no funcionaba en modo móvil
+
+**Motivo:** el usuario reportó que los botones para cambiar de foto en el carrusel del hero (en móvil) no funcionaban.
+
+**Hecho — se encontraron y corrigieron 3 bugs reales distintos, todos relacionados con el carrusel:**
+- **Flechas (prev/next) bloqueadas:** `.hero-arrow` y el `<h1>` del hero (dentro de `.hero .container`) compartían el mismo `z-index:3`. Como `.container` aparece después en el HTML, ganaba el empate de apilamiento y su texto quedaba pintado *encima* de las flechas, interceptando los toques. Se subió el `z-index` de `.hero-arrow` y `.hero-dots` a `4` en [css/styles.css](css/styles.css). Verificado con Playwright: las flechas ahora cambian de foto correctamente en las 5 páginas con carrusel (Inicio, Carpintería, Herrería, Construcción, Maquinaria).
+- **Puntos (dots) fuera de la pantalla:** el contenido del hero en móvil (encabezado, texto, botones) necesita más alto que el viewport, así que `.hero` (que usa `min-height`, no `height` fija) crece más allá de la pantalla (medido: 852px de alto contra 812px de viewport). Los puntos estaban posicionados con `bottom:30px` relativo a ese contenedor más alto, quedando literalmente debajo de la pantalla visible e imposibles de tocar sin hacer scroll. Se cambió su posicionamiento para anclarse a `calc(100svh - 48px)` desde arriba — así siempre quedan dentro de la pantalla visible sin importar cuánto crezca el contenido del hero.
+- **Clics en un punto activaban el punto vecino:** al ampliar antes el área táctil de los puntos (`::before{inset:-14px}`, para accesibilidad), el "área invisible" de cada punto se volvió tan grande que se encimaba con la del punto de al lado — al tocar un punto inactivo (9px) junto a uno activo (22px, más ancho), el toque se registraba en el vecino en vez del punto tocado. Se redujo el inset horizontal a `-4px` (se mantiene `-14px` verticalmente, donde no hay vecinos), eliminando el traslape sin perder el área táctil ampliada.
+- Verificado con Playwright real: en las 5 páginas, los puntos ahora están dentro del viewport visible, las flechas cambian de foto correctamente, y tocar cualquier punto activa exactamente esa foto (se probó la secuencia flecha → punto(0) → punto(3), llegando exactamente al índice esperado en cada paso).
+- Verificación final: CSS con llaves balanceadas (330/330), auditoría de overflow horizontal (30/30 sin problemas) y auditoría de animaciones de aparición (27/27 se activan), sin regresiones.
+
+**Pendiente:**
+- [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
+- [ ] Número de WhatsApp, correo, dirección y testimonios siguen siendo datos de relleno (placeholders) pendientes de reemplazar por los reales del cliente.

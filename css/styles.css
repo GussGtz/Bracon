@@ -270,7 +270,7 @@ section { padding: 90px 0; }
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 3;
+  z-index: 4;
   width: 48px; height: 48px;
   border-radius: 50%;
   background: rgba(247, 248, 250, 0.12);
@@ -292,8 +292,9 @@ section { padding: 90px 0; }
 
 .hero-dots {
   position: absolute;
-  bottom: 30px; right: 30px;
-  z-index: 3;
+  top: calc(100vh - 48px); top: calc(100svh - 48px);
+  right: 30px;
+  z-index: 4;
   display: flex; gap: 8px;
 }
 .hero-dots button {
@@ -305,7 +306,7 @@ section { padding: 90px 0; }
 .hero-dots button::before {
   content: "";
   position: absolute;
-  inset: -14px;
+  inset: -14px -4px;
 }
 .hero-dots button.active { background: var(--gold-400); width: 22px; border-radius: 5px; }
 
