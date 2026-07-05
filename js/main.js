@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initParallax();
   initCounters();
   initPortfolioFilter();
+  initPortfolioTouch();
   initLightbox();
 });
 
@@ -75,7 +76,7 @@ function initReveal() {
         }
       });
     },
-    { threshold: 0.15 }
+    { threshold: 0 }
   );
   items.forEach((i, idx) => {
     i.style.setProperty("--i", idx % 6);
@@ -338,26 +339,70 @@ function initPortfolioFilter() {
   const items = document.querySelectorAll(".portfolio-item");
   if (!buttons.length || !items.length) return;
 
+  const isMobile = () => window.matchMedia("(max-width: 768px)").matches;
+
+  const applyFilter = (filter) => {
+    const perCategoryCount = {};
+    items.forEach((item) => {
+      const category = item.getAttribute("data-category");
+      let match = filter === "all" || category === filter;
+      if (match && filter === "all" && isMobile()) {
+        perCategoryCount[category] = (perCategoryCount[category] || 0) + 1;
+        if (perCategoryCount[category] > 2) match = false;
+      }
+      if (match) {
+        item.style.display = "";
+        requestAnimationFrame(() => item.classList.remove("is-hidden"));
+      } else {
+        item.classList.add("is-hidden");
+        setTimeout(() => {
+          if (item.classList.contains("is-hidden")) item.style.display = "none";
+        }, 350);
+      }
+    });
+  };
+
   buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
       if (btn.classList.contains("active")) return;
       buttons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      const filter = btn.getAttribute("data-filter");
-
-      items.forEach((item) => {
-        const match = filter === "all" || item.getAttribute("data-category") === filter;
-        if (match) {
-          item.style.display = "";
-          requestAnimationFrame(() => item.classList.remove("is-hidden"));
-        } else {
-          item.classList.add("is-hidden");
-          setTimeout(() => {
-            if (item.classList.contains("is-hidden")) item.style.display = "none";
-          }, 350);
-        }
-      });
+      applyFilter(btn.getAttribute("data-filter"));
     });
+  });
+
+  const initialFilter = document.querySelector(".filter-btn.active")?.getAttribute("data-filter") || "all";
+  applyFilter(initialFilter);
+
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const current = document.querySelector(".filter-btn.active")?.getAttribute("data-filter") || "all";
+      if (current === "all") applyFilter(current);
+    }, 200);
+  });
+}
+
+function initPortfolioTouch() {
+  if (!window.matchMedia("(hover: none)").matches) return;
+  const items = document.querySelectorAll(".portfolio-item.portfolio-more");
+  if (!items.length) return;
+
+  items.forEach((item) => {
+    item.addEventListener("click", (e) => {
+      if (!item.classList.contains("touched")) {
+        e.preventDefault();
+        items.forEach((other) => other.classList.remove("touched"));
+        item.classList.add("touched");
+      }
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".portfolio-item.portfolio-more")) {
+      items.forEach((item) => item.classList.remove("touched"));
+    }
   });
 }
 

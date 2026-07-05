@@ -641,3 +641,68 @@ Bitácora de control del desarrollo del sitio web de Grupo Bracon. Cada entrada 
 
 **Pendiente:**
 - [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
+
+---
+
+## 2026-07-05 — Auditoría de responsividad 100% (todas las páginas, todos los tamaños de pantalla)
+
+**Motivo:** el usuario pidió hacer el sitio 100% responsivo en cada detalle, "cada esquina cada rincón", con UX profesional y funcional — cubriendo desde teléfonos pequeños hasta escritorio.
+
+**Hecho:**
+- Se instaló Playwright + Chromium (`npx playwright install chromium --with-deps`) para poder probar el sitio en un navegador real (headless), en lugar de depender solo de revisión estática de código.
+- Se revisaron y corrigieron en [css/styles.css](css/styles.css) varios problemas reales de UX/responsividad:
+  - `.nav-toggle` (botón de menú hamburguesa) tenía un área táctil de apenas ~26×17px; se amplió a 44×44px (mínimo recomendado de accesibilidad) sin cambiar el ícono visual.
+  - Los puntos del carrusel del hero (`.hero-dots button`, de solo 9px) tenían un área de toque diminuta; se agregó un `::before` invisible que amplía la zona táctil a ~37×37px.
+  - `.stats-photo` y `.brands` nunca reducían su padding en móvil por un bug de especificidad CSS: la regla de clase (`padding:80px 0`) siempre le ganaba a la regla genérica `section{padding:60px 0}` dentro del media query, sin importar el ancho de pantalla. Se corrigió agregando overrides explícitos para ambas clases dentro de su propio media query.
+  - El menú, CTA final, tarjetas de contacto y formulario, y la cuadrícula de galería/portafolio recibieron ajustes finos de padding, gap y columnas en breakpoints de 480px y 420px que antes no existían.
+  - Etiquetas y botón "Ver más" del portafolio, que solo aparecían con `:hover`, quedaban invisibles en pantallas táctiles (no existe hover real). Se agregó un bloque `@media (hover: none)` que los muestra siempre, de forma discreta, en dispositivos táctiles.
+  - `.wa-float` (botón flotante de WhatsApp) se redujo ligeramente en pantallas muy pequeñas para no tapar contenido.
+- **Bug real encontrado y corregido con pruebas en navegador (no visible con solo revisión de código):** en [contacto.html](contacto.html), a 320–375px de ancho, la página tenía scroll horizontal de hasta 116px. La causa: el correo `contacto@grupobracon.com` es una sola palabra sin espacios, y por el comportamiento por defecto de CSS Grid/Flexbox (`min-width: auto`), esto forzaba que `.info-card` y `.form-card` crecieran más allá de su columna. Un segundo caso idéntico apareció en el `<select>` del formulario por la opción larga "Carpintería exterior y acabados de madera", que empujaba el ancho del campo. Se corrigió con `min-width: 0` en `.contact-wrap > *`, `.info-card`, `.form-card`, `.field` y `.field input/select/textarea` (más `width:100%` explícito en los controles), y con `overflow-wrap: anywhere` en `.info-row span` y `.footer-col a` para que cualquier texto largo se parta en vez de forzar overflow.
+- **Verificación con Playwright real (no solo estática):**
+  - Script de auditoría de overflow horizontal en las 6 páginas × 5 anchos de pantalla (320, 375, 768, 1024, 1440px): **30/30 sin overflow horizontal y sin errores de consola**, tras la corrección.
+  - Menú móvil: se probó abrir y cerrar el menú hamburguesa (clase `.open`, transform, enlaces visibles) — funciona correctamente.
+  - Filtro de portafolio (Home): clic en filtro reduce correctamente los elementos visibles (16 totales → 4 visibles al filtrar).
+  - Lightbox (páginas de departamento): se abre al hacer clic en una foto de galería, se cierra con `Escape`, y se confirmó que **no bloquea clics** en el contenido de abajo una vez cerrado (aunque queda con `pointer-events:auto`, el `visibility:hidden` ya excluye el elemento del hit-testing del navegador).
+  - Formulario de contacto a 375px: los 4 campos se apilan correctamente a una sola columna, con ancho idéntico (273px) y sin desbordar.
+  - Se tomaron capturas de pantalla reales (mobile y tablet) como evidencia visual final.
+- Verificación final: CSS con llaves balanceadas (335/335), `main.js` con sintaxis válida.
+- **Cambios sin subir a GitHub todavía** — pendiente decidir si se hace commit + push de esta sesión.
+
+**Pendiente:**
+- [ ] Confirmar con el usuario si se hace commit + push de los cambios de responsividad a `https://github.com/GussGtz/Bracon.git`.
+- [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
+- [ ] Número de WhatsApp, correo, dirección y testimonios siguen siendo datos de relleno (placeholders) pendientes de reemplazar por los reales del cliente.
+
+---
+
+## 2026-07-05 — Corrección de 3 reportes del usuario tras la auditoría de responsividad
+
+**Motivo:** el usuario probó el sitio y reportó 3 problemas con capturas de pantalla: (1) las fotos del portafolio no se veían en la vista "Todos", (2) la etiqueta y el botón "Ver más" del portafolio aparecían encimados y de forma permanente en vez de solo al pasar el cursor, y (3) el menú se veía descuadrado en medio del footer al hacer scroll.
+
+**Hecho:**
+- **Bug real (portafolio en blanco):** en [js/main.js](js/main.js), la función `initReveal()` (animación de aparición al hacer scroll) usaba `threshold: 0.15`, es decir, el elemento necesitaba tener 15% de su propia altura visible en pantalla para activarse. El contenedor `.portfolio-grid` mide ~5500px de alto en móvil, así que ese 15% (~825px) nunca cabe dentro de una pantalla de ~800px de alto — la animación **nunca se disparaba** y la sección quedaba en opacidad 0 (blanco) para siempre. Se cambió a `threshold: 0` (se activa con solo 1px visible), que funciona igual de bien para elementos pequeños y ahora también para los grandes. Se verificó con Playwright real haciendo scroll completo por la página: los 27 elementos con animación de aparición (incluyendo el portafolio) ahora se activan correctamente.
+- **Encimado de etiqueta/botón:** el bloque `@media (hover: none)` que se había agregado en la sesión anterior (para mostrar la etiqueta y el botón "Ver más" siempre en pantallas táctiles) posicionaba el botón pegado abajo (`align-items:flex-end`), chocando visualmente con la etiqueta de categoría que también está abajo (`bottom:14px`). El usuario pidió explícitamente que ambos elementos solo se vean al pasar el cursor (comportamiento original de escritorio), así que se eliminó ese bloque completo. Esto restaura el comportamiento hover-only y de paso elimina el encimado (el botón vuelve a estar centrado verticalmente, sin chocar con la etiqueta de abajo). **Nota para el usuario:** esto significa que en dispositivos táctiles (celular/tablet) la etiqueta de categoría y el botón no se ven nunca, ya que no existe "cursor" en pantallas táctiles — solo se verían brevemente si el navegador simula el hover al tocar. Se deja así por ser una decisión explícita del cliente.
+- **Menú descuadrado al hacer scroll:** se verificó con Playwright haciendo scroll real (no una captura de pantalla completa) por las 9800px+ de la página, comprobando la posición del header en cada tramo — el header se mantiene perfectamente fijo (`position:fixed; top:0`) en el 100% de las posiciones probadas. Todo indica que la captura enviada por el usuario proviene de una herramienta de "captura de página completa" (similar a la que usa este mismo asistente) que toma varias capturas de la pantalla y las une, y que **no excluye los elementos de posición fija**, haciendo que el header fijo aparezca repetido/incrustado a mitad de la imagen final. No se encontró ningún bug real de posicionamiento del menú durante scroll normal e interactivo.
+- Se verificó: CSS con llaves balanceadas (330/330), `main.js` con sintaxis válida, auditoría completa de overflow horizontal en las 6 páginas × 5 anchos de pantalla sigue en 30/30 sin problemas.
+
+**Pendiente:**
+- [ ] Confirmar con el usuario si se hace commit + push de todos los cambios de responsividad (de esta sesión y la anterior) a `https://github.com/GussGtz/Bracon.git`.
+- [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
+- [ ] Número de WhatsApp, correo, dirección y testimonios siguen siendo datos de relleno (placeholders) pendientes de reemplazar por los reales del cliente.
+
+---
+
+## 2026-07-05 — Corrección de 3 reportes adicionales (menú tras scroll, portafolio en móvil, tag/botón táctil)
+
+**Motivo:** el usuario probó de nuevo el sitio en modo móvil y reportó: (1) el menú de navegación no cubre bien la pantalla al abrirse después de hacer scroll (se ve la foto de fondo detrás de los enlaces), (2) en la vista "Todos" del portafolio, en móvil deben verse solo 2 fotos por departamento en vez de 4, y (3) la etiqueta y el botón "Ver más" deben poder activarse también en móvil al tocar (no solo con cursor de escritorio).
+
+**Hecho:**
+- **Bug real del menú tras scroll:** `.site-header.scrolled` usa `backdrop-filter: blur(10px)` para el efecto de desenfoque al hacer scroll. Cualquier `transform`, `filter` o `backdrop-filter` en un elemento ancestro convierte a ese ancestro en el "contenedor de referencia" de sus descendientes con `position:fixed` (en vez del viewport completo) — y `.main-nav` vive dentro de `.site-header`. Por eso, en cuanto se activaba `.scrolled` (al bajar más de 40px), el menú móvil dejaba de cubrir toda la pantalla y solo ocupaba la altura del header (~68px), dejando ver el contenido de atrás. Se corrigió en [css/styles.css](css/styles.css) cambiando `inset:0` por `top:0; left:0; width:100vw; height:100vh` (con `100svh` de respaldo) — las unidades `vw`/`vh` siempre se calculan sobre el viewport real, sin importar el contenedor de referencia roto por el `backdrop-filter`. Verificado con Playwright: se hizo scroll a 1200px y se abrió el menú en 3 páginas distintas — ahora cubre los 812px completos de alto en las 3.
+- **2 fotos por departamento en "Todos" (móvil):** se reescribió `initPortfolioFilter()` en [js/main.js](js/main.js) para que, solo cuando el filtro activo es "Todos" (`all`) Y el ancho de pantalla es de escritorio angosto/móvil (≤768px), limite a las primeras 2 tarjetas de cada categoría y oculte el resto — en escritorio o al seleccionar una categoría específica, se siguen mostrando las 4 completas. También se aplica correctamente desde la primera carga de la página (antes solo se recalculaba al hacer clic en un botón de filtro) y se recalcula si el usuario cambia el tamaño de la ventana. Verificado: móvil + "Todos" = 8 fotos visibles (2 por cada una de las 4 categorías); escritorio + "Todos" = 16; móvil + filtro "Carpintería" = 4 (sin límite).
+- **Etiqueta/botón activables al tocar en móvil:** se agregó `initPortfolioTouch()` en [js/main.js](js/main.js), que solo actúa en dispositivos táctiles (`hover:none`). El primer toque sobre una tarjeta de portafolio revela la etiqueta y el botón "Ver más" (sin navegar todavía); un segundo toque en la misma tarjeta, o tocar el botón, sí navega a la página de esa categoría. Tocar en cualquier otro lugar de la página oculta la revelación. Se agregó la clase `.touched` en [css/styles.css](css/styles.css) junto a los selectores `:hover` existentes para reutilizar la misma animación. Verificado con Playwright simulando toques reales: primer toque revela (no navega), segundo toque navega correctamente a `carpinteria.html`.
+- Verificación final: CSS con llaves balanceadas (330/330), `main.js` con sintaxis válida, auditoría de overflow horizontal (30/30 sin problemas) y auditoría de animaciones de aparición (27/27 se activan) sin regresiones.
+
+**Pendiente:**
+- [ ] Confirmar con el usuario si se hace commit + push de todos los cambios de responsividad acumulados a `https://github.com/GussGtz/Bracon.git`.
+- [ ] Seguir sin fotos reales: Herrería, Construcción Ligera y Maquinaria.
+- [ ] Número de WhatsApp, correo, dirección y testimonios siguen siendo datos de relleno (placeholders) pendientes de reemplazar por los reales del cliente.
